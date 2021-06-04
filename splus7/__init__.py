@@ -11,6 +11,7 @@ from flask import Flask, request, session, render_template
 import spacy
 import json
 import regex
+import mlconjug3
 
 app = Flask(__name__)
 application = app
@@ -77,9 +78,12 @@ def parse(text, step):
             parsed.remove(token.text)
             continue
         elif token.pos_ in {'VERB', 'NOUN', 'ADJ', 'ADV'} and token.lemma_ in vocab:
+            if token.pos_ == 'VERB':
+                pos = token.tag_
+            else:
+                pos = token.pos_
 #            word_list = find_words(token.text, token.pos_)
-            word_list = get_ten_around(vocab.index(token.lemma_), token.pos_, step)
-            pos = token.pos_
+            word_list = get_ten_around(vocab.index(token.lemma_), pos, step)
         word_array.append([pos, word_list])
 #        if token.pos_ not in {'PUNCT', 'SYM'}:
 #            parsed.append(token.text)
@@ -87,29 +91,39 @@ def parse(text, step):
     session.modified = True
     return check_capitalization(word_array)
 
-#def find_words(token, pos):
-#    word_list = list()
-#    if token in vocab:
-#        word_list = get_ten_around(vocab.index(token), pos)
-#    return word_list
-
 def get_ten_around(i, pos, step):
     pos_map = {'VERB': 'Verb', 'NOUN': 'Noun', 'ADJ': 'Adjective', 'ADV': 'Adverb'}
 
+    tag_map = { 'VB': 'VERB', 'VBD': 'VERB', 'VBG': 'VERB', 'VBN': 'VERB', 'VBP': 'VERB', 'VBZ': 'VERB', 'JJ': 'ADJ', 'JJR': 'ADJ', 'JJS': 'ADJ', 'NN': 'NOUN', 'NNP': 'NOUN', 'NNPS': 'NOUN', 'NNS': 'NOUN', 'RB': 'ADV', 'RBR': 'ADV', 'RBS': 'ADV', 'RP': 'ADV'}
+
     def get_five(i, pos, step):
         word_list = list()
+        tag = pos
+        if pos[0] == 'V':
+            pos = 'VERB'
         while len(word_list) < 5:
             i += step
             ind = i % len(vocab)
-#            ind = i if i < len(vocab) else i - len(vocab)
             if pos in vocab_dict[vocab[ind]]:
                 if step > 0:
-                    word_list.append(vocab[ind])
+                    word_list.append(get_conjugated(vocab[ind], tag))
                 else:
-                    word_list.insert(0,vocab[ind])
+                    word_list.insert(0,get_conjugated(vocab[ind], tag))
         return word_list
 
-    return get_five(i, pos_map[pos], -step) + [vocab[i]] + get_five(i, pos_map[pos], step)
+    def get_conjugated(w, p):
+        if p[0] == 'V':
+            mlc = mlconjug3.Conjugator(language='en')
+            if p == 'VBD':
+            elif p == 'VBG':
+            elif p == 'VBN':
+            elif p == 'VBP':
+            elif p == 'VBZ':
+            else: # VB
+        else:
+            return [w,w] # we need base form and conjugated form
+
+    return get_five(i, pos_map[pos], -step) + [[vocab[i]]] + get_five(i, pos_map[pos], step)
 
 def check_capitalization(a):
     orig = session['parsed']
