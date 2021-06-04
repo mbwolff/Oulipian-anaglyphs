@@ -52,6 +52,7 @@ def display():
 
     session['words'] = words
     session.modified = True
+    words = conjugate_verbs(words)
     return render_template('display.html', words=words, text=session['text'], step=session['step'])
 
 def mod_word(words, i, d):
@@ -98,32 +99,22 @@ def get_ten_around(i, pos, step):
 
     def get_five(i, pos, step):
         word_list = list()
-        tag = pos
-        if pos[0] == 'V':
-            pos = 'VERB'
+#        tag = pos
+#        if pos[0] == 'V':
+#            pos = 'VERB'
         while len(word_list) < 5:
             i += step
             ind = i % len(vocab)
             if pos in vocab_dict[vocab[ind]]:
                 if step > 0:
-                    word_list.append(get_conjugated(vocab[ind], tag))
+                    word_list.append(vocab[ind])
                 else:
-                    word_list.insert(0,get_conjugated(vocab[ind], tag))
+                    word_list.insert(0,vocab[ind])
         return word_list
 
-    def get_conjugated(w, p):
-        if p[0] == 'V':
-            mlc = mlconjug3.Conjugator(language='en')
-            if p == 'VBD':
-            elif p == 'VBG':
-            elif p == 'VBN':
-            elif p == 'VBP':
-            elif p == 'VBZ':
-            else: # VB
-        else:
-            return [w,w] # we need base form and conjugated form
-
-    return get_five(i, pos_map[pos], -step) + [[vocab[i]]] + get_five(i, pos_map[pos], step)
+    if pos[0] == 'V':
+        pos = 'VERB'
+    return get_five(i, pos_map[pos], -step) + [vocab[i]] + get_five(i, pos_map[pos], step)
 
 def check_capitalization(a):
     orig = session['parsed']
@@ -133,3 +124,25 @@ def check_capitalization(a):
             if p.match(orig[j]):
                 a[j][1][i] = a[j][1][i].capitalize()
     return a
+
+def conjugate_verbs(wa):
+    def conjugate(base, t):
+        mlc = mlconjug3.Conjugator(language='en')
+        if t == 'VBD':
+            return mlc.conjugate(base).conjug_info['indicative']['indicative past tense']['1s']
+        elif t == 'VBG':
+            return mlc.conjugate(base).conjug_info['indicative']['indicative present continuous']['1s']
+        elif t == 'VBN':
+            return mlc.conjugate(base).conjug_info['indicative']['indicative present perfect']['1s']
+        elif t == 'VBP':
+            return mlc.conjugate(base).conjug_info['indicative']['indicative present']['1s']
+        elif t == 'VBZ':
+            return mlc.conjugate(base).conjug_info['indicative']['indicative present']['3s']
+        else: # VB
+            return base
+
+    for w in wa:
+        if w[0][0] == 'V':
+            for f in w[1]:
+                f = conjugate(f, w[0])
+    return wa
