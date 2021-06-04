@@ -28,6 +28,7 @@ vocab = list(vocab_dict.keys())
 vocab.sort()
 
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
+mlc = mlconjug3.Conjugator(language='en')
 
 @app.route('/')
 def index():
@@ -127,7 +128,6 @@ def check_capitalization(a):
 
 def conjugate_verbs(wa):
     def conjugate(base, t):
-        mlc = mlconjug3.Conjugator(language='en')
         if t == 'VBD':
             return mlc.conjugate(base).conjug_info['indicative']['indicative past tense']['1s']
         elif t == 'VBG':
