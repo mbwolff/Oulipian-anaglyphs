@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>Anaglyph 1</title>
+
+<!-- “Anaglyph 1” Copyright (C) 2021 Mark Wolff
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved. This file is offered as-is,
+without any warranty.
+
+-->
+
+	<style>
+	body { margin:0 ; overflow:hidden }
+	a { color:#eee ; text-decoration:none }
+	header { margin:0 ; padding:0 ; background-color:#444 ; color:#bbb ;
+		position:relative ; z-index:1000 }
+	header > h1 { margin:0 ; font-size:12px ; font-family:sans-serif ;
+		border-bottom:1px #999 solid ; padding:5px 10px ; line-height:17px }
+</style>
+</head>
+<body>
+<header id=nav>
+	<h1>
+		<a href="template.html">“Anaglyph 1”</a> by
+		<a href="about.html#AUTHOR">Mark Wolff</a> :
+		<a href="prev.html">&lt;&lt;</a> &mdash;
+		<a href="next.html">&gt;&gt;</a>
+	</h1>
+</header> <!-- The poem that follows, up to </body>, is at most 2kb -->
+<canvas id="c" width="660" height="600" style="padding:0;margin:auto;display:block;position:absolute;top:0;bottom:0;left:0;right:0;border:6px solid #000000;"></canvas><script>window.onload = function start(){g()}
+function g() {
+  var c = document.getElementById('c');
+	c.globalAlpha = 0.5;
+  var t = c.getContext('2d');
+  var words = 'naufrage tempête manoir vieillard écumes chef ironie point destin geste clapotis raison pieds poing délire mystère vents nef esprit lieu chance sirène cadavre homme brumes hasard surface division prince aigrette rareté flots mal horreur coup partie contrées compte velours vol suspens abîme ciel front envergure évidence secret os démon acte horizon joncher évènement manœuvre nom tête dés coque voltige ais déclivité maître oubli heurt bonds contenu fantôme barre désuétude rire maniaque insinuation main perdition intérieur squames voile obliquité hilarité conflagration legs nombre calculs foudre avance vague ébat silence cime ras plume somme aïeul opposition profusion probabilité agonie esclaffement vertige torsion ultérieur âge stature blancheur profondeur altitude fiançailles écueil borne rencontre aile fond crise pensée vue bord mer roc hantise absence feux intérêt indice bâtiment infini réalité temps barbe ombrage résultat bras mensonge jaillissements gouffre toque neutralité endroit illusion ombre folie hallucination tourbillon inclinaison disparition parages'.split(' ');
+//  var colors = ['#EED88F','#A4230F','#000000','#6C492F','#B4AC88'];
+  var sequences = [];
+  function newseq(){
+    var w = [];
+//    var speed = r(36,6);
+//    var y = r(c.height,0);
+//    var size = r(96,12);
+    var n = r(10,0);
+//    var color = colors[r(0,colors.length-1)]
+    for(i=0;i<=n;i++){
+      w.push(words[r(words.length,0)]);
+    }
+//    return [w,speed,y,size,0,ana];
+//    return [w,r(12,1),r(c.height,0),r(97,12),0,r(5,1),r(10,5)];
+		return [w,r(12,1),r(c.height,0),r(97,12),0,r(10,-10)];
+    // next to last item is position which will increment
+  }
+  function r(max, min) {
+    return Math.floor(Math.random() * (max - min) + min);
+  }
+
+  window.setInterval(function () {
+    t.clearRect(0, 0, c.width, c.height);
+    // for sequences, set initial x and y, text size, no words
+    // all three are random numbers
+    if (sequences.length < 12) {
+      sequences.push(newseq());
+    }
+    var length = sequences.length;
+    for (i=0;i<length;i++) {
+      t.font = sequences[i][3].toString() + 'px serif';
+      var txt = sequences[i][0].join(' ');
+      if(sequences[i][4] - t.measureText(txt).width >= c.width){
+        sequences.splice(i--,1);
+        length--;
+      } else {
+				t.fillStyle = 'rgba(0, 255, 255, 0.5)';
+        t.fillText(txt,c.width-sequences[i][4],sequences[i][2]);
+        sequences[i][4] += sequences[i][1];
+				t.fillStyle = 'rgba(255, 0, 0, 0.5)';
+//        t.fillText(txt,c.width-sequences[i][4]-sequences[i][5],sequences[i][2]-sequences[i][6]);
+				t.fillText(txt,c.width-sequences[i][4]-sequences[i][5],sequences[i][2])
+        sequences[i][4] += sequences[i][1];
+      }
+    }
+  }, 40);
+}</script></body>
+</html>
