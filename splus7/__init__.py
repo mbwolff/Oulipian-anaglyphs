@@ -8,11 +8,13 @@ this notice are preserved. This file is offered as-is, without any warranty.
 """
 
 from flask import Flask, request, session, render_template
-import spacy
+#import spacy
+from pattern.en import pluralize, conjugate, lemma, lexeme, parse, tag
 import json
 import regex
-import mlconjug3
+#import mlconjug3
 import sys
+import nltk
 
 app = Flask(__name__)
 application = app
@@ -20,16 +22,18 @@ if __name__ == "__main__":
     app.run()
 
 # Set the secret key to some random bytes. Keep this really secret!
-nlp = spacy.load('en_core_web_sm')
-vocab_file = 'splus7/vocab02.json'
-mlc = mlconjug3.Conjugator(language='en')
+#nlp = spacy.load('en_core_web_sm')
+#vocab_file = 'splus7/vocab02.json'
+#mlc = mlconjug3.Conjugator(language='en')
 
-with open(vocab_file) as json_file:
-    vocab_dict = json.load(json_file)
-vocab = list(vocab_dict.keys())
-vocab.sort()
+#with open(vocab_file) as json_file:
+#    vocab_dict = json.load(json_file)
+#vocab = list(vocab_dict.keys())
+vocab = nltk.corpus.words.words()
+#vocab.sort()
 
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
+select_treebank = {'VB', 'VBZ', 'VBP', 'VBD', 'VBN', 'VBG', 'NN', 'NNS', 'NNP', 'NNPS', 'JJ', 'JJR', 'JJS', 'RB', 'RBR', 'RBS'}
 
 @app.route('/')
 def index():
@@ -74,54 +78,63 @@ def parse(text, step):
     word_array = list()
     parsed = list()
 
-    for token in nlp(text):
-        parsed.append(token.text)
-        word_list = [token.lemma_] * 11
-        pos = token.pos_
-        string = token.lemma_
-        if token.pos_ in {'PUNCT', 'SYM'} and len(word_array) > 0:
-            for i in range(11):
-                word_array[-1][1][i] += token.text
-            parsed.remove(token.text)
-            continue
-        elif token.pos_ in {'VERB', 'NOUN', 'ADJ', 'ADV', 'PROPN'} and token.lemma_.lower() in vocab:
-            if token.pos_ == 'VERB':
-                pos = token.tag_
-            elif token.pos_ == 'PROPN':
-                pos = 'NOUN'
-                string = token.lemma_.lower()
-            word_list = get_ten_around(vocab.index(string), pos, step)
-        word_array.append([pos, word_list])
+    for sent in parse(text, chunks=False, lemmata=True).split():
+        for token in sent:
+# output:
+#[[['The', 'DT', 'the'], ['children', 'NNS', 'child'], ['cried', 'VBD', 'cry'], ['.', '.', '.']]]
+#    for token in nlp(text):
+#        parsed.append(token.text)
+            parsed.append(token[0])
+#        word_list = [token.lemma_] * 11
+            word_list = [token[2]] * 11
+#        pos = token.pos_
+#        string = token.lemma_
+#            if token.pos_ in {'PUNCT', 'SYM'} and len(word_array) > 0:
+            if token[1] in {'.', ',', ':', '(', ')' 'SYM'} and len(word_array) > 0:
+            # Penn Treebank II tag set
+                for i in range(11):
+#                    word_array[-1][1][i] += token.text
+                    word_array[-1][1][i] += token[0]
+#                parsed.remove(token.text)
+                parsed.remove(token[0])
+                continue
+#            elif token.pos_ in {'VERB', 'NOUN', 'ADJ', 'ADV', 'PROPN'} and token.lemma_.lower() in vocab:
+            elif token[1] in select_treebank and token[2] in vocab:
+#                if token.pos_ == 'VERB':
+#                    pos = token.tag_
+#                elif token.pos_ == 'PROPN':
+#                    pos = 'NOUN'
+#                    string = token.lemma_.lower()
+#                word_list = get_ten_around(vocab.index(string), pos, step)
+                word_list = get_ten_around(vocab.index(token[2]), token[1], step)
+            word_array.append([pos, word_list])
 
     session['parsed'] = parsed
     session.modified = True
     return word_array
 
-#def find_words(token, pos):
-#    word_list = list()
-#    if token in vocab:
-#        word_list = get_ten_around(vocab.index(token), pos)
-#    return word_list
+#def get_ten_around(i, pos, step):
+#    pos_map = {'VERB': 'Verb', 'NOUN': 'Noun', 'ADJ': 'Adjective', 'ADV': 'Adverb'}
+#
+#    def get_five(i, pos, step):
+#        word_list = list()
+#        while len(word_list) < 5:
+#            i += step
+#            ind = i % len(vocab)
+##            ind = i if i < len(vocab) else i - len(vocab)
+#            if pos in vocab_dict[vocab[ind]]:
+#                if step > 0:
+#                    word_list.append(vocab[ind])
+#                else:
+#                    word_list.insert(0,vocab[ind])
+#        return word_list
+#
+#    if pos[:2] == 'VB':
+#        pos = 'VERB'
+#    return get_five(i, pos_map[pos], -step) + [vocab[i]] + get_five(i, pos_map[pos], step)
 
 def get_ten_around(i, pos, step):
-    pos_map = {'VERB': 'Verb', 'NOUN': 'Noun', 'ADJ': 'Adjective', 'ADV': 'Adverb'}
-
-    def get_five(i, pos, step):
-        word_list = list()
-        while len(word_list) < 5:
-            i += step
-            ind = i % len(vocab)
-#            ind = i if i < len(vocab) else i - len(vocab)
-            if pos in vocab_dict[vocab[ind]]:
-                if step > 0:
-                    word_list.append(vocab[ind])
-                else:
-                    word_list.insert(0,vocab[ind])
-        return word_list
-
-    if pos[:2] == 'VB':
-        pos = 'VERB'
-    return get_five(i, pos_map[pos], -step) + [vocab[i]] + get_five(i, pos_map[pos], step)
+    return get_five(i, pos, -step) + [vocab[i]] + get_five(i, pos, step)
 
 def check_capitalization(a):
     orig = session['parsed']
@@ -132,34 +145,47 @@ def check_capitalization(a):
                 a[j][1][i] = a[j][1][i].capitalize()
     return a
 
-def inflect(wa):
-    display = list()
-    for i in range(len(wa)):
-        if wa[i][0][0] == 'V':
-            for j in range(len(wa[i][1])):
-                w = regex.sub(r'[[:punct:]]+$', '', wa[i][1][j])
-                p = regex.sub(r'^[[:alnum:]]+', '', wa[i][1][j])
-                wa[i][1][j] = conjugate(w, wa[i][0]) + p
-        display.append(wa[i])
+def get_five(i, pos, step):
+    initial_lemma = vocab[i]
+    word_list = list()
+    direction = 1
+    if step < 0:
+        step = -step
+        direction = -1
 
-    return display
+    counter = step
+    while len(word_list) < 5:
+        ind = direction * (counter if counter < len(vocab) else len(vocab)-counter)
+#            ind = i if i < len(vocab) else i - len(vocab)
+#            if pos in vocab_dict[vocab[ind]:
+        if inflects(vocab[ind], pos):
+            if direction > 0:
+                word_list.append(vocab[ind])
+            else:
+                word_list.insert(0,vocab[ind])
+            counter += step * direction
+        else:
+            counter += direction
+    return word_list
 
-def conjugate(base, t):
-    c = str()
-    if t == 'VBD':
-        c = mlc.conjugate(base).conjug_info['indicative']['indicative past tense']['1s']
-    elif t == 'VBG':
-        c = mlc.conjugate(base).conjug_info['indicative']['indicative present continuous']['1s']
-    elif t == 'VBN':
-        c = mlc.conjugate(base).conjug_info['indicative']['indicative present perfect']['1s']
-    elif t == 'VBP':
-        c = mlc.conjugate(base).conjug_info['indicative']['indicative present']['1s']
-    elif t == 'VBZ':
-        c = mlc.conjugate(base).conjug_info['indicative']['indicative present']['3s']
-    else: # VB
-        c = base
-#    eprint(base, t, c)
-    return c
+def inflects(lemma, pos):
+    if pos == 'VB':
+    elif pos == 'VBZ':
+    elif pos == 'VBP':
+    elif pos == 'VBD':
+    elif pos == 'VBN':
+    elif pos == 'VBG':
+    elif pos == 'NN':
+    elif pos == 'NNS':
+    elif pos == 'NNP':
+    elif pos == 'NNPS':
+    elif pos == 'JJ':
+    elif pos == 'JJR':
+    elif pos == 'JJS':
+    elif pos == 'RB':
+    elif pos == 'RBR':
+    elif pos == 'RBS':
+    else:
 
 def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
