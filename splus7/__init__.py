@@ -51,7 +51,8 @@ def display():
 
     session['words'] = words
     session.modified = True
-    return render_template('display.html', words=words, text=session['text'], step=session['step'])
+    display = inflect(words)
+    return render_template('display.html', words=display, text=session['text'], step=session['step'])
 
 def mod_word(words, i, d):
     step = int(session['step'])
@@ -118,3 +119,5 @@ def check_capitalization(a):
             if p.match(orig[j]):
                 a[j][1][i] = a[j][1][i].capitalize()
     return a
+
+def inflect(wa):
