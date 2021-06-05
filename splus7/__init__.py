@@ -77,7 +77,6 @@ def parse(text, step):
             parsed.remove(token.text)
             continue
         elif token.pos_ in {'VERB', 'NOUN', 'ADJ', 'ADV'} and token.lemma_ in vocab:
-#            word_list = find_words(token.text, token.pos_)
             word_list = get_ten_around(vocab.index(token.lemma_), token.pos_, step)
             pos = token.pos_
         word_array.append([pos, word_list])
