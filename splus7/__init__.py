@@ -69,14 +69,14 @@ def display():
 
 def mod_word(words, i, d):
     step = int(session['step'])
-    w = regex.sub(r'[[:punct:]]+$', '', words[i][1][d])
-    punct = regex.sub(r'^[[:alnum:]]+', '', words[i][1][d])
+#    w = regex.sub(r'[[:punct:]]+$', '', words[i][1][d])
+#    punct = regex.sub(r'^[[:alnum:]]+', '', words[i][1][d])
 #    eprint('W', w, 'P', p)
 #    eprint('Testing vocab', w, vocab.index(w))
-    if w in vocab:
-        words[i][1] = get_ten_around(vocab.index(w), words[i][0], step)
-        for j in range(11):
-            words[i][1][j] += punct
+    if words[i][1][d] in vocab:
+        words[i][1] = get_ten_around(vocab.index(words[i][1][d]), words[i][0], step)
+#        for j in range(11):
+#            words[i][1][j] += punct
     return words
 
 def parse(text, step):
