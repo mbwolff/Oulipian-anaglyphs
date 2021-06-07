@@ -17,3 +17,10 @@
   <textarea id="{{ name }}" name="{{ name }}" rows="4" cols="60">{% if session['text'] %}{{ session['text'] }}{% else %}{{ value }}{% endif %}</textarea>
 </div>
 {%- endmacro %}
+{% macro input_checkboxes() -%}
+    <p>Which parts of speech do you want to modify?</p>
+    {% for type in session['partsofspeech'] %}
+    <input type="checkbox" id="{{ type }}" name="{{ type }}"{% if session[type] == 'on' %} checked{% endif %}>
+    <label for="{{ type }}">{{ type }}</label>
+    {% endfor %}
+{%- endmacro %}

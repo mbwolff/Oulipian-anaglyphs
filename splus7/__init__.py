@@ -9,7 +9,7 @@ this notice are preserved. This file is offered as-is, without any warranty.
 
 from flask import Flask, request, session, render_template
 #import spacy
-from pattern.en import pluralize, conjugate, parse, superlative, comparative
+from pattern.en import pluralize, conjugate, parse, superlative, comparative, lemma
 import pickle
 import re, regex
 #import mlconjug3
@@ -24,6 +24,12 @@ if __name__ == "__main__":
 # Set the secret key to some random bytes. Keep this really secret!
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 select_treebank = {'VB', 'VBZ', 'VBP', 'VBD', 'VBN', 'VBG', 'NN', 'NNS', 'NNP', 'NNPS', 'JJ', 'JJR', 'JJS', 'RB', 'RBR', 'RBS'}
+pos_map = {
+    'Noun': ['NN', 'NNS', 'NNP', 'NNPS'],
+    'Verb': ['VB', 'VBZ', 'VBP', 'VBD', 'VBN', 'VBG'],
+    'Adjective': ['JJ', 'JJR', 'JJS'],
+    'Adverb': ['RB', 'RBR', 'RBS']
+}
 
 dict_fname = 'splus7/vocab03.pickle'
 with open(dict_fname, 'rb') as handle:
@@ -33,23 +39,43 @@ vocab.sort()
 
 @app.route('/')
 def index():
+    pos = ['Noun', 'Verb', 'Adjective', 'Adverb']
     if 'words' in session:
         del session['words']
 #        del session['parsed']
         del session['text']
+        del session['display']
+        for type in pos:
+            if type in session:
+                del session[type]
     session['display'] = 'normal'
     session['step'] = 1
+    session['partsofspeech'] = pos
     session.modified = True
     return render_template('index.html')
 
 @app.route('/display', methods=['GET', 'POST'])
 def display():
+    if 'message' in session:
+        del session['message']
     words = list()
     if 'text' in request.form:
         session['text'] = request.form['text']
         session['step'] = request.form['step']
         session['display'] = request.form['display']
-        words = parse_input(request.form['text'], int(request.form['step']))
+        pos = list()
+        for type in session['partsofspeech']:
+            if type in request.form:
+                pos += pos_map[type]
+                session[type] = 'on'
+            elif type in session:
+                del session[type]
+            session.modified = True
+        if len(pos) == 0:
+            session['message'] = 'Please select at least one part of speech to modify.'
+            session.modified = True
+            return render_template('index.html')
+        words = parse_input(request.form['text'], int(request.form['step']), pos)
     else:
         return render_template('error.html')
 
@@ -58,7 +84,7 @@ def display():
     displayed = prep_display(words)
     return render_template('display.html', displayed=displayed)
 
-def parse_input(text, step):
+def parse_input(text, step, pos):
     word_array = list()
     parsed = list()
 
@@ -66,13 +92,16 @@ def parse_input(text, step):
         for token in sent:
             parsed.append(token[0])
             word_list = [token[0]] * 11
-            if token[1] in {'.', ',', ':'} and len(word_array) > 0:
+            if token[2] in {'be', 'have'} and token[1][:2] == 'VB':
+                word_list = [token[0]] * 11
+            elif token[1] in {'.', ',', ':'} and len(word_array) > 0:
             # Penn Treebank II tag set
                 for i in range(11):
                     word_array[-1][1][i] += token[0]
                 parsed.remove(token[0])
                 continue
-            elif token[1] in select_treebank and token[2] in vocab_dict.keys():
+#            elif token[1] in select_treebank and token[2] in vocab_dict.keys():
+            elif token[1] in pos and token[2] in vocab_dict.keys():
                 word_list = get_ten_around(vocab.index(token[2]), token[1], step)
             word_array.append([token[1], word_list])
 
@@ -114,11 +143,13 @@ def get_five(i, pos, step):
             counter += 1
     return word_list
 
-def find_form(lemma, pos):
-    w = regex.sub(r'[[:punct:]]+$', '', lemma)
-    p = regex.sub(r'^[[:alnum:]]+', '', lemma)
-    if pos in { 'VB', 'NN', 'NNP', 'JJ', 'RB' }:
-        return lemma
+def find_form(lem, pos):
+    w = regex.sub(r'[[:punct:]]+$', '', lem)
+    p = regex.sub(r'^[[:alnum:]]+', '', lem)
+    if pos[:2] == 'VB' and lemma(w) in { 'be', 'have'}:
+        return lem
+    elif pos in { 'VB', 'NN', 'NNP', 'JJ', 'RB' }:
+        return lem
     elif pos == 'VBZ':
         return conjugate(w, "3sg") + p
     elif pos == 'VBP':
@@ -136,7 +167,7 @@ def find_form(lemma, pos):
     elif pos in { 'JJS', 'RBS' }:
         return superlative(w) + p
     else:
-        return lemma
+        return lem
 
 def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
