@@ -23,7 +23,7 @@
 
 <div id="screen_content" style="padding:0; margin:auto; display:block; top:0; bottom:0; left:0; right:0; border:6px solid #000000; height:500px; width:900px; overflow:scroll">
 {% for j in range(11) %}
-<p {% if session['display'] == 'anaglyph' %}class="anaglyph" style="--width: {{ 100 - 5*(j-5)|abs }}%; --font: {{ 36 - 3*(j-5)|abs }}px serif; --text-shadow: rgba(255, 0, 0, 0.5) {{ 3*((j-5)|abs-1) }}px 0px;"{% else %}class="normal" style="--width: {{ 100 - 5*(j-5)|abs }}%; --font: {{ 26 - (j-5)|abs }}px serif;"{% endif %}>
+<p {% if session['display'] == 'anaglyph' %}class="anaglyph" style="--width: {{ 100 - 5*(j-5)|abs }}%; --font: {{ 36 - 5*(j-5)|abs }}px serif; --text-shadow: rgba(255, 0, 0, 0.5) {{ 3*((j-5)|abs-1) }}px 0px;"{% else %}class="normal" style="--width: {{ 100 - 5*(j-5)|abs }}%; --font: {{ 26 - (j-5)|abs }}px serif;"{% endif %}>
 {% for i in range(0, displayed|count) %}
 {{ displayed[i][1][j] }}
 {% if (i+1) % 8 == 0 %}
