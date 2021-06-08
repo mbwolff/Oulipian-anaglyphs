@@ -8,9 +8,13 @@ this notice are preserved. This file is offered as-is, without any warranty.
 """
 
 from flask import Flask, request, session, render_template
-import spacy
-import json
-import regex
+#import spacy
+from pattern.en import pluralize, conjugate, parse, superlative, comparative, lemma
+import pickle
+import re, regex
+#import mlconjug3
+import sys
+import nltk
 
 app = Flask(__name__)
 application = app
@@ -18,104 +22,163 @@ if __name__ == "__main__":
     app.run()
 
 # Set the secret key to some random bytes. Keep this really secret!
-nlp = spacy.load('en_core_web_sm')
-vocab_file = 'splus7/vocab02.json'
+app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
+select_treebank = {'VB', 'VBZ', 'VBP', 'VBD', 'VBN', 'VBG', 'NN', 'NNS', 'NNP', 'NNPS', 'JJ', 'JJR', 'JJS', 'RB', 'RBR', 'RBS'}
+pos_map = {
+    'Noun': ['NN', 'NNS', 'NNP', 'NNPS'],
+    'Verb': ['VB', 'VBZ', 'VBP', 'VBD', 'VBN', 'VBG'],
+    'Adjective': ['JJ', 'JJR', 'JJS'],
+    'Adverb': ['RB', 'RBR', 'RBS']
+}
 
-with open(vocab_file) as json_file:
-    vocab_dict = json.load(json_file)
+dict_fname = 'splus7/vocab03.pickle'
+with open(dict_fname, 'rb') as handle:
+    vocab_dict = pickle.load(handle)
 vocab = list(vocab_dict.keys())
 vocab.sort()
 
-app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
-
 @app.route('/')
 def index():
+    pos = ['Noun', 'Verb', 'Adjective', 'Adverb']
     if 'words' in session:
         del session['words']
 #        del session['parsed']
         del session['text']
-        session.modified = True
+        del session['display']
+        for type in pos:
+            if type in session:
+                del session[type]
+    session['display'] = 'normal'
+    session['step'] = 1
+    session['partsofspeech'] = pos
+    session.modified = True
     return render_template('index.html')
 
 @app.route('/display', methods=['GET', 'POST'])
 def display():
+    if 'message' in session:
+        del session['message']
     words = list()
-    if 'words' in session:
-        words = mod_word(session['words'], int(request.args.get('w')), int(request.args.get('d')))
-    elif 'text' in request.form:
+    if 'text' in request.form:
         session['text'] = request.form['text']
         session['step'] = request.form['step']
-        words = parse(request.form['text'], int(request.form['step']))
+        session['display'] = request.form['display']
+        pos = list()
+        for type in session['partsofspeech']:
+            if type in request.form:
+                pos += pos_map[type]
+                session[type] = 'on'
+            elif type in session:
+                del session[type]
+            session.modified = True
+        if len(pos) == 0:
+            session['message'] = 'Please select at least one part of speech to modify.'
+            session.modified = True
+            return render_template('index.html')
+        words = parse_input(request.form['text'], int(request.form['step']), pos)
     else:
         return render_template('error.html')
 
     session['words'] = words
     session.modified = True
-    return render_template('display.html', words=words, text=session['text'], step=session['step'])
+    displayed = prep_display(words)
+    return render_template('display.html', displayed=displayed)
 
-def mod_word(words, i, d):
-    step = int(session['step'])
-    w = regex.sub(r'[[:punct:]]+$', '', words[i][1][d])
-    p = regex.sub(r'^[[:alnum:]]+', '', words[i][1][d])
-    if w in vocab:
-        words[i][1] = get_ten_around(vocab.index(w), words[i][0], step)
-        for j in range(11):
-            words[i][1][j] += p
-    return words
-
-def parse(text, step):
+def parse_input(text, step, pos):
     word_array = list()
     parsed = list()
 
-    for token in nlp(text):
-        parsed.append(token.text)
-        word_list = [token.lemma_] * 11
-        pos = 'NA'
-        if token.pos_ in {'PUNCT', 'SYM'} and len(word_array) > 0:
-            for i in range(11):
-                word_array[-1][1][i] += token.text
-            parsed.remove(token.text)
-            continue
-        elif token.pos_ in {'VERB', 'NOUN', 'ADJ', 'ADV'} and token.lemma_ in vocab:
-#            word_list = find_words(token.text, token.pos_)
-            word_list = get_ten_around(vocab.index(token.lemma_), token.pos_, step)
-            pos = token.pos_
-        word_array.append([pos, word_list])
-#        if token.pos_ not in {'PUNCT', 'SYM'}:
-#            parsed.append(token.text)
+    for sent in parse(text, chunks=False, lemmata=True).split():
+        for token in sent:
+            parsed.append(token[0])
+            word_list = [token[0]] * 11
+            if token[2] in {'be', 'have'} and token[1][:2] == 'VB':
+                word_list = [token[0]] * 11
+            elif token[1] in {'.', ',', ':'} and len(word_array) > 0:
+            # Penn Treebank II tag set
+                for i in range(11):
+                    word_array[-1][1][i] += token[0]
+                parsed.remove(token[0])
+                continue
+#            elif token[1] in select_treebank and token[2] in vocab_dict.keys():
+            elif token[1] in pos and token[2] in vocab_dict.keys():
+                word_list = get_ten_around(vocab.index(token[2]), token[1], step)
+            word_array.append([token[1], word_list])
+
     session['parsed'] = parsed
     session.modified = True
-    return check_capitalization(word_array)
-
-#def find_words(token, pos):
-#    word_list = list()
-#    if token in vocab:
-#        word_list = get_ten_around(vocab.index(token), pos)
-#    return word_list
+    return word_array
 
 def get_ten_around(i, pos, step):
-    pos_map = {'VERB': 'Verb', 'NOUN': 'Noun', 'ADJ': 'Adjective', 'ADV': 'Adverb'}
+    return get_five(i, pos, -step) + [vocab[i]] + get_five(i, pos, step)
 
-    def get_five(i, pos, step):
-        word_list = list()
-        while len(word_list) < 5:
-            i += step
-            ind = i % len(vocab)
-#            ind = i if i < len(vocab) else i - len(vocab)
-            if pos in vocab_dict[vocab[ind]]:
-                if step > 0:
-                    word_list.append(vocab[ind])
-                else:
-                    word_list.insert(0,vocab[ind])
-        return word_list
-
-    return get_five(i, pos_map[pos], -step) + [vocab[i]] + get_five(i, pos_map[pos], step)
-
-def check_capitalization(a):
+def prep_display(a): # capitalize and conjugate, pluralize, etc.
     orig = session['parsed']
     p = regex.compile(r"^[[:upper:]]+")
     for j in range(len(a)): # len(a) = number of words in version
         for i in range(11): # there are 11 versions
+            a[j][1][i] = find_form(a[j][1][i], a[j][0])
+            if j < len(a) - 1 and a[j][0] == 'DT':
+                if a[j][1][i].lower() == 'a' and a[j+1][1][i][0].lower() in ['a', 'e', 'i', 'o', 'u']:
+                    a[j][1][i] = 'an'
+                elif a[j][1][i].lower() == 'an' and a[j+1][1][i][0].lower() not in ['a', 'e', 'i', 'o', 'u']:
+                    a[j][1][i] = 'a'
             if p.match(orig[j]):
                 a[j][1][i] = a[j][1][i].capitalize()
     return a
+
+def get_five(i, pos, step):
+#    initial_lemma = vocab[i]
+    word_list = list()
+    direction = 1
+    if step < 0:
+        step = -step
+        direction = -1
+
+    counter = i + step
+    while len(word_list) < 5:
+        ind = direction * (counter if counter < len(vocab) else (counter-len(vocab))%len(vocab))
+        if pos in vocab_dict[vocab[ind]]:
+            if direction > 0:
+                word_list.append(vocab[ind])
+            else:
+                word_list.insert(0,vocab[ind])
+            counter += step
+        else:
+            counter += 1
+    return word_list
+
+def find_form(lem, pos):
+    w = regex.sub(r'[[:punct:]]+$', '', lem)
+    p = regex.sub(r'^[[:alnum:]]+', '', lem)
+    if pos[:2] == 'VB' and lemma(w) in { 'be', 'have'}:
+        return lem
+    elif pos in { 'VB', 'NN', 'NNP', 'JJ', 'RB' }:
+        return lem
+    elif pos == 'VBZ':
+        return conjugate(w, "3sg") + p
+    elif pos == 'VBP':
+        return conjugate(w, "1sg") + p
+    elif pos == 'VBD':
+        return conjugate(w, "p") + p
+    elif pos == 'VBN':
+        return conjugate(w, "ppart") + p
+    elif pos == 'VBG':
+        return conjugate(w, "part") + p
+    elif pos in { 'NNS', 'NNPS' }:
+        return pluralize(w) + p
+    elif pos in { 'JJR', 'RBR' }:
+        if w[-2:] == 'er':
+            return lem
+        else:
+            return comparative(w) + p
+    elif pos in { 'JJS', 'RBS' }:
+        if w[-2:] == 'st':
+            return lem
+        else:
+            return superlative(w) + p
+    else:
+        return lem
+
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
