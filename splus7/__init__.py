@@ -118,6 +118,11 @@ def prep_display(a): # capitalize and conjugate, pluralize, etc.
     for j in range(len(a)): # len(a) = number of words in version
         for i in range(11): # there are 11 versions
             a[j][1][i] = find_form(a[j][1][i], a[j][0])
+            if j < len(a) - 1 and a[j][0] == 'DT':
+                if a[j][1][i].lower() == 'a' and a[j+1][1][i][0].lower() in ['a', 'e', 'i', 'o', 'u']:
+                    a[j][1][i] = 'an'
+                elif a[j][1][i].lower() == 'an' and a[j+1][1][i][0].lower() not in ['a', 'e', 'i', 'o', 'u']:
+                    a[j][1][i] = 'a'
             if p.match(orig[j]):
                 a[j][1][i] = a[j][1][i].capitalize()
     return a
@@ -163,9 +168,15 @@ def find_form(lem, pos):
     elif pos in { 'NNS', 'NNPS' }:
         return pluralize(w) + p
     elif pos in { 'JJR', 'RBR' }:
-        return comparative(w) + p
+        if w[-2:] == 'er':
+            return lem
+        else:
+            return comparative(w) + p
     elif pos in { 'JJS', 'RBS' }:
-        return superlative(w) + p
+        if w[-2:] == 'st':
+            return lem
+        else:
+            return superlative(w) + p
     else:
         return lem
 

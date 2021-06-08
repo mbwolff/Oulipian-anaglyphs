@@ -23,11 +23,12 @@ without any warranty.
 	header > h1 { margin:0 ; font-size:12px ; font-family:sans-serif ;
 		border-bottom:1px #999 solid ; padding:5px 10px ; line-height:17px }
 
-	p, label {
+	p, label, a {
 		font:18px serif;
-		color: black;
 		padding:5px 5px;
-		margin: 5px auto; /* or margin: 0 auto 0 auto */
+		margin: 5px auto; /* or margin: 0 auto 0 auto */{% if session['display'] == 'anaglyph' %}
+		color: rgba(0, 255, 255, 0.5);
+		text-shadow: rgba(255, 0, 0, 0.5) -3px 0px;{% endif %}
 	}
 	.anaglyph {
 		font: var(--font);
@@ -43,11 +44,13 @@ without any warranty.
 		width: var(--width);
 		text-align: center;
 	}
+	table {
+		table-layout: fixed;
+		width: 100%;
+		border-collapse: collapse;
+	}
 	td {
 		vertical-align: top;
-	}
-	table {
-		margin: 0;
 	}
 </style>
 </head>

@@ -3,12 +3,13 @@
 {% block title %}W + N{% endblock %}
 {% block content %}
   <form method="post" action="/display" style="padding: 30px;">
+    <div style="margin:0;">
     <table>
       <tr>
         <td>
           {{ forms.text_input(label='Original text:') }}
           <p><input type="submit" value="Send"></p>
-          <p><a style="color: #000;" href="/">Start over.</a></p>
+          <p><a href="/">Start over.</a></p>
         </td>
         <td>
           {{ forms.input_number() }}
@@ -17,6 +18,7 @@
         </td>
       </tr>
     </table>
+    </div>
   </form>
 
 <div id="screen_content" style="padding:0; margin:auto; display:block; top:0; bottom:0; left:0; right:0; border:6px solid #000000; height:500px; width:900px; overflow:scroll">
