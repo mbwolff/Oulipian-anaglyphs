@@ -1,6 +1,5 @@
 {% macro input_number(name='step', value=session['step'], size=8, min=1) -%}
-    <p>Value for <i>N</i>:<br/>
-    <input type="number" name="{{ name }}" id="{{ name }}" value="{{ value|e }}" size="{{ size }}" min="{{ min }}">
+    <p>Value for <i>N</i>: <input type="number" name="{{ name }}" id="{{ name }}" value="{{ value|e }}" size="{{ size }}" min="{{ min }}">
   </p>
 {%- endmacro %}
 {% macro input_display_method(label="Choose a display:") -%}
