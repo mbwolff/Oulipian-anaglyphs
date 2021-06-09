@@ -7,13 +7,13 @@ permitted in any medium without royalty provided the copyright notice and
 this notice are preserved. This file is offered as-is, without any warranty.
 """
 
-from nltk.corpus import brown
+from nltk.corpus import gutenberg
 from pattern.en import parse
 #import pprint
 import re
 import pickle
 #import os.path
-fname = 'vocab03.pickle'
+fname = 'gutenberg.pickle'
 
 #pp = pprint.PrettyPrinter(indent=4)
 #nlp = spacy.load('en_core_web_sm')
@@ -22,7 +22,7 @@ fname = 'vocab03.pickle'
 dictionary = dict()
 
 #wl = set(nlp.vocab.strings)
-for chunk in brown.sents():
+for chunk in gutenberg.sents():
     text = ' '.join(chunk)
     for sent in parse(text, chunks=False, lemmata=True).split():
         for token in sent:

@@ -18,8 +18,17 @@
       <label for="anaglyph">Anaglyph</label>
     </div>
 {%- endmacro %}
+{% macro input_dictionary(label="Choose a dictionary:") -%}
+    <div class="form_element" style="grid-column: 1; grid-row: 4;">
+    <p>{{ label }}</p>
+      <input type="radio" id="brown" name="dictionary" value="brown"{% if session['dictionary'] == 'brown' %} checked{%- endif %}>
+      <label for="brown">Brown corpus</label>
+      <input type="radio" id="gutenberg" name="dictionary" value="gutenberg"{% if session['dictionary'] == 'gutenberg' %} checked{%- endif %}>
+      <label for="gutenberg">Gutenberg corpus</label>
+    </div>
+{%- endmacro %}
 {% macro text_input(label='Enter some text:', name='text', value='In the beginning, when God created the universe, the earth was formless and desolate. The raging ocean that covered everything was engulfed in total darkness, and the Spirit of God was moving over the water.') -%}
-<div class="form_element" style="grid-column: 1; grid-row: 1 / 3;">
+<div class="form_element" style="grid-column: 1; grid-row: 1 / 2;">
 <label for="{{ name }}">{{ label }}</label><br/>
   <textarea id="{{ name }}" name="{{ name }}" rows="5" cols="50">{% if session['text'] %}{{ session['text'] }}{% else %}{{ value }}{% endif %}</textarea>
 </div>

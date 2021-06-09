@@ -31,11 +31,13 @@ pos_map = {
     'Adverb': ['RB', 'RBR', 'RBS']
 }
 
-dict_fname = 'splus7/vocab03.pickle'
-with open(dict_fname, 'rb') as handle:
-    vocab_dict = pickle.load(handle)
-vocab = list(vocab_dict.keys())
-vocab.sort()
+dictionary = dict()
+for d in ['brown', 'gutenberg']:
+    with open('splus7/' + d + '.pickle', 'rb') as handle:
+        corpus_dict = pickle.load(handle)
+    vocab = list(corpus_dict.keys())
+    vocab.sort()
+    dictionary[d] = [ corpus_dict, vocab ]
 
 @app.route('/')
 def index():
@@ -49,6 +51,7 @@ def index():
             if type in session:
                 del session[type]
     session['display'] = 'normal'
+    session['dictionary'] = 'brown'
     session['step'] = 1
     session['partsofspeech'] = pos
     session.modified = True
@@ -63,6 +66,7 @@ def display():
         session['text'] = request.form['text']
         session['step'] = request.form['step']
         session['display'] = request.form['display']
+        session['dictionary'] = request.form['dictionary']
         pos = list()
         for type in session['partsofspeech']:
             if type in request.form:
@@ -85,6 +89,7 @@ def display():
     return render_template('display.html', displayed=displayed)
 
 def parse_input(text, step, pos):
+    d = dictionary[session['dictionary']]
     word_array = list()
     parsed = list()
 
@@ -101,8 +106,9 @@ def parse_input(text, step, pos):
                 parsed.remove(token[0])
                 continue
 #            elif token[1] in select_treebank and token[2] in vocab_dict.keys():
-            elif token[1] in pos and token[2] in vocab_dict.keys():
-                word_list = get_ten_around(vocab.index(token[2]), token[1], step)
+            elif token[1] in pos and token[2] in d[0].keys():
+#                word_list = get_ten_around(vocab.index(token[2]), token[1], step)
+                word_list = get_ten_around(d[1].index(token[2]), token[1], step)
             word_array.append([token[1], word_list])
 
     session['parsed'] = parsed
@@ -110,6 +116,7 @@ def parse_input(text, step, pos):
     return word_array
 
 def get_ten_around(i, pos, step):
+    vocab = dictionary[session['dictionary']][1]
     return get_five(i, pos, -step) + [vocab[i]] + get_five(i, pos, step)
 
 def prep_display(a): # capitalize and conjugate, pluralize, etc.
@@ -129,6 +136,8 @@ def prep_display(a): # capitalize and conjugate, pluralize, etc.
 
 def get_five(i, pos, step):
 #    initial_lemma = vocab[i]
+    vocab_dict = dictionary[session['dictionary']][0]
+    vocab = dictionary[session['dictionary']][1]
     word_list = list()
     direction = 1
     if step < 0:
