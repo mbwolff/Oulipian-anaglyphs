@@ -151,7 +151,7 @@ def get_five(i, pos, step):
 def find_form(lem, pos):
     w = regex.sub(r'[[:punct:]]+$', '', lem)
     p = regex.sub(r'^[[:alnum:]]+', '', lem)
-    if pos[:2] == 'VB' and lemma(w) in { 'be', 'have'}:
+    if pos[:2] == 'VB' and lemma(w) in { 'be', 'have', 'do'}:
         return lem
     elif pos in { 'VB', 'NN', 'NNP', 'JJ', 'RB' }:
         return lem
