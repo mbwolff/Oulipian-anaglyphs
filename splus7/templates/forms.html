@@ -13,7 +13,7 @@
     <div class="form_element" style="grid-column: 2; grid-row: 2;">
     <p>{{ label }}</p>
       <input type="radio" id="normal" name="display" value="normal"{% if session['display'] == 'normal' %} checked{%- endif %}>
-      <label for="normal">Normal</label>
+      <label for="normal">Normal</label><br/>
       <input type="radio" id="anaglyph" name="display" value="anaglyph"{% if session['display'] == 'anaglyph' %} checked{%- endif %}>
       <label for="anaglyph">Anaglyph</label>
     </div>
