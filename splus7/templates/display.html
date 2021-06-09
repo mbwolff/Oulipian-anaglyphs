@@ -2,26 +2,25 @@
 {% import 'forms.html' as forms %}
 {% block title %}W + N{% endblock %}
 {% block content %}
-<table><tr><td>
-  <form method="post" action="/display" style="padding: 30px;">
-    {{ forms.text_input(label='Original text:') }}
-    {{ forms.input_number() }}
-    {{ forms.input_checkboxes() }}</td></tr><tr><td>
-    {{ forms.input_display_method() }}
-    <input type="submit" value="Send">
-    <p><a href="/">Start over.</a></p></td></tr></table>
+<form method="post" action="/display">
+		{{ forms.text_input() }}
+		{{ forms.input_number() }}
+		{{ forms.input_display_method() }}
+		{{ forms.input_checkboxes() }}
+		{{ forms.input_button() }}
+</form>
+<p><a href="/">Start over.</a></p>
 
-    <div id="screen_content" style="padding:0; top:0; bottom:0; left:0; right:0; border:6px solid #000000; height:400px; width:800px; margin:0; overflow:scroll">
-    {% for j in range(11) %}
-    <p {% if session['display'] == 'anaglyph' %}class="anaglyph" style="--width: {{ 100 - 5*(j-5)|abs }}%; --font: {{ 36 - 5*(j-5)|abs }}px serif; --text-shadow: rgba(255, 0, 0, 0.5) {{ 3*((j-5)|abs-1) }}px 0px;"{% else %}class="normal" style="--width: {{ 100 - 5*(j-5)|abs }}%; --font: {{ 26 - (j-5)|abs }}px serif;"{% endif %}>
-    {% for i in range(0, displayed|count) %}
-    {{ displayed[i][1][j] }}
-    {% if (i+1) % 8 == 0 %}
-    <br/>
-    {% endif %}
-    {% endfor %}
-    </p>
-    {% endfor %}
-    </div>
-  </form>
+<div id="screen_content" style="padding:0; top:0; bottom:0; left:0; right:0; border:6px solid #000000; height:400px; width:900px; margin:0 auto; overflow:scroll">
+{% for j in range(11) %}
+<p {% if session['display'] == 'anaglyph' %}class="anaglyph" style="--width: {{ 100 - 5*(j-5)|abs }}%; --font: {{ 36 - 4*(j-5)|abs }}px serif; --text-shadow: rgba(255, 0, 0, 0.5) {{ 3*((j-5)|abs-1) }}px 0px;"{% else %}class="normal" style="--width: {{ 100 - 5*(j-5)|abs }}%; --font: {{ 36 - 4*(j-5)|abs }}px serif;"{% endif %}>
+{% for i in range(0, displayed|count) %}
+{{ displayed[i][1][j] }}
+{% if (i+1) % 8 == 0 %}
+<br/>
+{% endif %}
+{% endfor %}
+</p>
+{% endfor %}
+</div>
 {% endblock content %}

@@ -24,7 +24,8 @@ without any warranty.
 		border-bottom:1px #999 solid ; padding:5px 10px ; line-height:17px }
 
 	p, label, a {
-		font:14px serif;
+		font:16px serif;
+		padding: 10px;
 		margin: 3px auto; /* or margin: 0 auto 0 auto */{% if session['display'] == 'anaglyph' %}
 		color: rgba(0, 255, 255, 0.5);
 		text-shadow: rgba(255, 0, 0, 0.5) -3px 0px;{% endif %}
@@ -47,9 +48,19 @@ without any warranty.
 		table-layout: fixed;
 		width: 100%;
 		border-collapse: collapse;
+		margin: auto;
 	}
 	td {
 		vertical-align: top;
+		margin: auto;
+	}
+	form {
+	  display  : grid;
+	  grid-template-columns : repeat(2, 1fr);
+		grid-template-rows: repeat(4, 50px);
+	}
+	.form_element {
+		padding: 20px;
 	}
 </style>
 </head>

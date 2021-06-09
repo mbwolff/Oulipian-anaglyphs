@@ -2,13 +2,12 @@
 {% import 'forms.html' as forms %}
 {% block title %}W + N{% endblock %}
 {% block content %}
-{% if session['message'] %}<p><b>{{ session['message'] }}</b></p>{% endif %}
-<form method="post" action="/display" style="padding: 30px;">
+<form method="post" action="/display">
 		{{ forms.text_input() }}
 		{{ forms.input_number() }}
 		{{ forms.input_display_method() }}
 		{{ forms.input_checkboxes() }}
-		<p></p>
-    <p><input type="submit" value="Send"></p>
+		{{ forms.input_button() }}
 </form>
+{% if session['message'] %}<p><b>{{ session['message'] }}</b></p>{% endif %}
 {% endblock content %}
