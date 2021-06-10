@@ -17,7 +17,7 @@
 <p {% if session['display'] == 'anaglyph' %}class="anaglyph" style="--width: {{ 100 - 5*(j-5)|abs }}%; --font: {{ 24 - 2*(j-5)|abs }}px serif; --text-shadow: rgba(255, 0, 0, 0.5) {{ 3*((j-5)|abs-1) }}px 0px;"{% else %}class="normal" style="--width: {{ 100 - 5*(j-5)|abs }}%; --font: {{ 24 - 2*(j-5)|abs }}px serif;"{% endif %}>
 {% for i in range(0, displayed|count) %}
 {{ displayed[i][1][j] }}
-{% if (i+1) % 8 == 0 %}
+{% if (i+1) % 7 == 0 %}
 <br/>
 {% endif %}
 {% endfor %}
