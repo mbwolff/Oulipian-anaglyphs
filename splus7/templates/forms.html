@@ -1,6 +1,6 @@
 {% macro input_number(name='step', value=session['step'], size=8, min=1) -%}
   <div class="form_element" style="grid-column: 2; grid-row: 1;">
-    <label for="{{ name }}">Value for <i>N</i>:</label>
+    <label for="{{ name }}">Value for <i>n</i>:</label>
     <input type="number" name="{{ name }}" id="{{ name }}" value="{{ value|e }}" size="{{ size }}" min="{{ min }}">
   </div>
 {%- endmacro %}
